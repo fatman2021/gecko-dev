@@ -615,4 +615,3 @@ extern GLLibraryEGL sEGLLibrary;
 } /* namespace mozilla */
 
 #endif /* GLLIBRARYEGL_H_ */
-

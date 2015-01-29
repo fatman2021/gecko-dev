@@ -668,8 +668,8 @@ struct GLContextSymbols
     PFNGLCOMPRESSEDTEXSUBIMAGE3D fCompressedTexSubImage3D;
 
     // get_string_indexed
-    typedef const GLubyte* (GLAPIENTRY * pfnGLGetStringiT)(GLenum name, GLuint index);
-    pfnGLGetStringiT fGetStringi;
+    typedef const GLubyte* (GLAPIENTRY * PFNGLGETSTRINGIPROC) (GLenum name, GLuint index);
+    PFNGLGETSTRINGIPROC fGetStringi;
 };
 
 }

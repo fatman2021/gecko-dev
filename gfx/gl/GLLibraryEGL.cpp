@@ -533,4 +533,3 @@ GLLibraryEGL::AfterGLCall(const char* glFunction)
 
 } /* namespace gl */
 } /* namespace mozilla */
-
