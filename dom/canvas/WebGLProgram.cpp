@@ -496,6 +496,12 @@ WebGLProgram::GetProgramParameter(GLenum pname) const
     }
 }
 
+GLuint
+WebGLProgram::GetUniformBlockIndex(const nsAString& userName_wide) const
+{
+    return LOCAL_GL_INVALID_INDEX;
+}
+
 already_AddRefed<WebGLUniformLocation>
 WebGLProgram::GetUniformLocation(const nsAString& userName_wide) const
 {

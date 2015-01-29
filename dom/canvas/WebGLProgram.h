@@ -115,6 +115,7 @@ public:
     GLint GetFragDataLocation(const nsAString& name) const;
     void GetProgramInfoLog(nsAString* const out) const;
     JS::Value GetProgramParameter(GLenum pname) const;
+    GLuint GetUniformBlockIndex(const nsAString& name) const;
     already_AddRefed<WebGLUniformLocation> GetUniformLocation(const nsAString& name) const;
     bool LinkProgram();
     bool UseProgram() const;

@@ -7,12 +7,12 @@
 #include "GLContext.h"
 #include "WebGLContext.h"
 #include "WebGLProgram.h"
+#include "WebGLValidateStrings.h"
 #include "WebGLVertexArray.h"
 #include "WebGLVertexAttribData.h"
 #include "mozilla/dom/WebGL2RenderingContextBinding.h"
 
-using namespace mozilla;
-using namespace mozilla::dom;
+namespace mozilla {
 
 typedef union { GLint i; GLfloat f; GLuint u; } fi_t;
 
@@ -576,3 +576,5 @@ WebGL2Context::UniformBlockBinding(WebGLProgram* program, GLuint uniformBlockInd
     MakeContextCurrent();
     gl->fUniformBlockBinding(progname, uniformBlockIndex, uniformBlockBinding);
 }
+
+} // namespace mozilla
