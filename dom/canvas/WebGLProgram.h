@@ -162,6 +162,9 @@ private:
     nsCString mLinkLog;
     RefPtr<const webgl::LinkedProgramInfo> mMostRecentLinkInfo;
     GLuint mTransformVaryingCount;
+    // Storage for transform feedback varyings before link.
+    // (Work around for bug seen on nVidia drivers.)
+    UniquePtr<GLchar[]> mVaryings;
 };
 
 } // namespace mozilla

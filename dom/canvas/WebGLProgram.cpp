@@ -689,6 +689,20 @@ WebGLProgram::LinkAndUpdate()
     if (!mMostRecentLinkInfo)
         mLinkLog.AssignLiteral("Failed to gather program info.");
 
+// DEBUGGING
+    GLint varyingCount = -1;
+    gl->fGetProgramiv(mGLName, LOCAL_GL_TRANSFORM_FEEDBACK_VARYINGS, &varyingCount);
+    for (GLint i = 0; i < varyingCount; i++) {
+        GLsizei size;
+        GLenum type;
+        GLchar name[257] = { 0, };
+        gl->fGetTransformFeedbackVarying(mGLName, i, 257, NULL, &size, &type, name);
+        printf_stderr("Varying[%d]: %s\n", i, name);
+    }
+
+    // Delete storage of translated varying names
+    mVaryings.reset();
+
     return mMostRecentLinkInfo;
 }
 
@@ -716,12 +730,23 @@ WebGLProgram::FindUniformByMappedName(const nsACString& mappedName,
     return false;
 }
 
+#define WEBGL_MAX_SHADER_NAME_LENGTH 256
+
 void
 WebGLProgram::TransformFeedbackVaryings(const dom::Sequence<nsString>& varyings,
                                         GLenum bufferMode)
 {
+    // Spec doesn't say what to do if no vertex shader on program.
+    if (!mVertShader)
+        return;
+
     const GLsizei varyingCount = varyings.Length();
-    UniquePtr<const GLchar*[]> tmpVaryings(new const GLchar*[varyingCount]);
+    // Allocated temporary storage for converted strings. 257 elements per string to allow
+    // for maximum name and \0 character.
+    mVaryings = MakeUnique<GLchar[]>(varyingCount*(WEBGL_MAX_SHADER_NAME_LENGTH+1));
+    UniquePtr<GLchar*[]> varyingPtrs = MakeUnique<GLchar*[]>(varyingCount);
+
+    GLchar* ptr = mVaryings.get();
     for (GLsizei n = 0; n < varyingCount; n++) {
         NS_LossyConvertUTF16toASCII varyingName(varyings[n]);
         nsCString translatedName;
@@ -731,13 +756,14 @@ WebGLProgram::TransformFeedbackVaryings(const dom::Sequence<nsString>& varyings,
             translatedName = varyingName;
         }
 
-        tmpVaryings[n] = translatedName.BeginReading();
+        varyingPtrs[n] = ptr;
+        strncpy(ptr, translatedName.BeginReading(), WEBGL_MAX_SHADER_NAME_LENGTH);
+        ptr += (WEBGL_MAX_SHADER_NAME_LENGTH + 1);
     }
 
     gl::GLContext* gl = mContext->GL();
     gl->MakeCurrent();
-    gl->fTransformFeedbackVaryings(mGLName, varyingCount, tmpVaryings.get(), bufferMode);
-
+    gl->fTransformFeedbackVaryings(mGLName, varyingCount, varyingPtrs.get(), bufferMode);
     mTransformVaryingCount = varyingCount;
 }
 
