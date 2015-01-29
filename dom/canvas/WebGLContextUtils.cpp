@@ -232,6 +232,11 @@ DriverFormatsFromEffectiveInternalFormat(gl::GLContext* gl,
     TexInternalFormat unsizedinternalformat = LOCAL_GL_NONE;
     TexType type = LOCAL_GL_NONE;
 
+    // driverInternalFormat: almost always the same as driverFormat, but on desktop GL,
+    // in some cases we must pass a different value. On ES, they are equal by definition
+    // as it is an error to pass internalformat!=format.
+    GLenum driverInternalFormat = effectiveinternalformat.get();
+
     UnsizedInternalFormatAndTypeFromEffectiveInternalFormat(effectiveinternalformat,
                                                             &unsizedinternalformat,
                                                             &type);
@@ -245,10 +250,6 @@ DriverFormatsFromEffectiveInternalFormat(gl::GLContext* gl,
     // driverFormat: always just the unsized internalformat that we just got
     GLenum driverFormat = unsizedinternalformat.get();
 
-    // driverInternalFormat: almost always the same as driverFormat, but on desktop GL,
-    // in some cases we must pass a different value. On ES, they are equal by definition
-    // as it is an error to pass internalformat!=format.
-    GLenum driverInternalFormat = driverFormat;
     if (gl->IsCompatibilityProfile()) {
         // Cases where desktop OpenGL requires a tweak to 'format'
         if (driverFormat == LOCAL_GL_SRGB)
