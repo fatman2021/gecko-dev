@@ -59,23 +59,24 @@ IsUniformSetterTypeValid(GLenum setterType, GLenum uniformType)
                setterType == LOCAL_GL_FLOAT; // GLfloat(0.0) sets a bool to false.
 
     case LOCAL_GL_INT:
-    case LOCAL_GL_INT_SAMPLER_2D:
-    case LOCAL_GL_INT_SAMPLER_2D_ARRAY:
-    case LOCAL_GL_INT_SAMPLER_3D:
-    case LOCAL_GL_INT_SAMPLER_CUBE:
     case LOCAL_GL_INT_VEC2:
     case LOCAL_GL_INT_VEC3:
     case LOCAL_GL_INT_VEC4:
     case LOCAL_GL_SAMPLER_2D:
+    case LOCAL_GL_SAMPLER_3D:
+    case LOCAL_GL_SAMPLER_CUBE:
+    case LOCAL_GL_SAMPLER_2D_SHADOW:
     case LOCAL_GL_SAMPLER_2D_ARRAY:
     case LOCAL_GL_SAMPLER_2D_ARRAY_SHADOW:
-    case LOCAL_GL_SAMPLER_2D_SHADOW:
-    case LOCAL_GL_SAMPLER_CUBE:
     case LOCAL_GL_SAMPLER_CUBE_SHADOW:
+    case LOCAL_GL_INT_SAMPLER_2D:
+    case LOCAL_GL_INT_SAMPLER_3D:
+    case LOCAL_GL_INT_SAMPLER_CUBE:
+    case LOCAL_GL_INT_SAMPLER_2D_ARRAY:
     case LOCAL_GL_UNSIGNED_INT_SAMPLER_2D:
-    case LOCAL_GL_UNSIGNED_INT_SAMPLER_2D_ARRAY:
     case LOCAL_GL_UNSIGNED_INT_SAMPLER_3D:
     case LOCAL_GL_UNSIGNED_INT_SAMPLER_CUBE:
+    case LOCAL_GL_UNSIGNED_INT_SAMPLER_2D_ARRAY:
         return setterType == LOCAL_GL_INT;
 
     case LOCAL_GL_FLOAT:
@@ -154,17 +155,40 @@ WebGLUniformLocation::ValidateArrayLength(uint8_t setterElemSize, size_t setterA
     return true;
 }
 
+static bool
+IsSampler(GLenum elemType)
+{
+    switch (elemType) {
+    case LOCAL_GL_SAMPLER_2D:
+    case LOCAL_GL_SAMPLER_3D:
+    case LOCAL_GL_SAMPLER_CUBE:
+    case LOCAL_GL_SAMPLER_2D_SHADOW:
+    case LOCAL_GL_SAMPLER_2D_ARRAY:
+    case LOCAL_GL_SAMPLER_2D_ARRAY_SHADOW:
+    case LOCAL_GL_SAMPLER_CUBE_SHADOW:
+    case LOCAL_GL_INT_SAMPLER_2D:
+    case LOCAL_GL_INT_SAMPLER_3D:
+    case LOCAL_GL_INT_SAMPLER_CUBE:
+    case LOCAL_GL_INT_SAMPLER_2D_ARRAY:
+    case LOCAL_GL_UNSIGNED_INT_SAMPLER_2D:
+    case LOCAL_GL_UNSIGNED_INT_SAMPLER_3D:
+    case LOCAL_GL_UNSIGNED_INT_SAMPLER_CUBE:
+    case LOCAL_GL_UNSIGNED_INT_SAMPLER_2D_ARRAY:
+        return true;
+
+    default:
+        return false;
+    }
+}
+
 bool
 WebGLUniformLocation::ValidateSamplerSetter(GLint value, WebGLContext* webgl,
                                             const char* funcName) const
 {
     MOZ_ASSERT(mLinkInfo);
 
-    if (mActiveInfo->mElemType != LOCAL_GL_SAMPLER_2D &&
-        mActiveInfo->mElemType != LOCAL_GL_SAMPLER_CUBE)
-    {
+    if (!IsSampler(mActiveInfo->mElemType))
         return true;
-    }
 
     if (value >= 0 && value < (GLint)webgl->GLMaxTextureUnits())
         return true;
@@ -195,7 +219,20 @@ WebGLUniformLocation::GetUniform(JSContext* js, WebGLContext* webgl) const
     case LOCAL_GL_INT_VEC3:
     case LOCAL_GL_INT_VEC4:
     case LOCAL_GL_SAMPLER_2D:
+    case LOCAL_GL_SAMPLER_3D:
     case LOCAL_GL_SAMPLER_CUBE:
+    case LOCAL_GL_SAMPLER_2D_SHADOW:
+    case LOCAL_GL_SAMPLER_2D_ARRAY:
+    case LOCAL_GL_SAMPLER_2D_ARRAY_SHADOW:
+    case LOCAL_GL_SAMPLER_CUBE_SHADOW:
+    case LOCAL_GL_INT_SAMPLER_2D:
+    case LOCAL_GL_INT_SAMPLER_3D:
+    case LOCAL_GL_INT_SAMPLER_CUBE:
+    case LOCAL_GL_INT_SAMPLER_2D_ARRAY:
+    case LOCAL_GL_UNSIGNED_INT_SAMPLER_2D:
+    case LOCAL_GL_UNSIGNED_INT_SAMPLER_3D:
+    case LOCAL_GL_UNSIGNED_INT_SAMPLER_CUBE:
+    case LOCAL_GL_UNSIGNED_INT_SAMPLER_2D_ARRAY:
         {
             GLint buffer[kMaxElemSize] = {0};
             gl->fGetUniformiv(prog, mLoc, buffer);
