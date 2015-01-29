@@ -583,7 +583,7 @@ CreateHeadlessGL(bool forceEnabled, const nsCOMPtr<nsIGfxInfo>& gfxInfo,
     bool preferEGL = PR_GetEnv("MOZ_WEBGL_PREFER_EGL");
     bool disableANGLE = Preferences::GetBool("webgl.disable-angle", false);
 
-    if (PR_GetEnv("MOZ_WEBGL_FORCE_OPENGL"))
+    //if (PR_GetEnv("MOZ_WEBGL_FORCE_OPENGL"))
         disableANGLE = true;
 
     bool requireCompatProfile = webgl->IsWebGL2() ? false : true;
