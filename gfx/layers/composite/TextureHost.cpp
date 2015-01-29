@@ -50,6 +50,7 @@
 
 #ifdef XP_WIN
 #include "SharedSurfaceANGLE.h"
+#include "SharedSurfaceD3D11Interop.h"
 #include "mozilla/layers/TextureDIB.h"
 #endif
 
@@ -884,6 +885,20 @@ SharedSurfaceToTexSource(gl::SharedSurface* abstractSurf, Compositor* compositor
 
       if (!tex) {
         NS_WARNING("Failed to open shared resource.");
+        break;
+      }
+      texSource = new DataTextureSourceD3D11(format, compositorD3D11, tex);
+      break;
+    }
+    case gl::SharedSurfaceType::DXGLInterop2: {
+      auto surf = gl::SharedSurface_D3D11Interop::Cast(abstractSurf);
+
+      MOZ_ASSERT(compositor->GetBackendType() == LayersBackend::LAYERS_D3D11);
+      CompositorD3D11* compositorD3D11 = static_cast<CompositorD3D11*>(compositor);
+      RefPtr<ID3D11Texture2D> tex = surf->GetConsumerTexture();
+
+      if (!tex) {
+        NS_WARNING("Failed to open DXGLinterop resource.");
         break;
       }
       texSource = new DataTextureSourceD3D11(format, compositorD3D11, tex);

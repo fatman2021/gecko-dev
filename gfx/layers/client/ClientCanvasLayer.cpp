@@ -21,6 +21,7 @@
 
 #ifdef XP_WIN
 #include "SharedSurfaceANGLE.h"         // for SurfaceFactory_ANGLEShareHandle
+#include "SharedSurfaceD3D11Interop.h"  // for SurfaceFactory_D3D11Interop
 #include "gfxWindowsPlatform.h"
 #endif
 
@@ -113,6 +114,11 @@ ClientCanvasLayer::Initialize(const Data& aData)
 #ifdef XP_WIN
         if (mGLContext->IsANGLE() && DoesD3D11TextureSharingWork(gfxWindowsPlatform::GetPlatform()->GetD3D11Device())) {
           factory = SurfaceFactory_ANGLEShareHandle::Create(mGLContext, caps);
+        }
+
+        if (!factory) {
+          ID3D11Device* d3d = gfxWindowsPlatform::GetPlatform()->GetD3D11Device();
+          factory = SurfaceFactory_D3D11Interop::Create(mGLContext, d3d, caps);
         }
 #endif
         break;

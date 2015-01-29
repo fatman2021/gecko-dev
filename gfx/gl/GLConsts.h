@@ -5954,6 +5954,9 @@
 #define LOCAL_WGL_VIDEO_OUT_STACKED_FIELDS_1_2               0x20CB
 #define LOCAL_WGL_VIDEO_OUT_STACKED_FIELDS_2_1               0x20CC
 
-
+// WGL_NV_DX_interop
+#define LOCAL_WGL_ACCESS_READ_ONLY                           0x0000
+#define LOCAL_WGL_ACCESS_READ_WRITE                          0x0001
+#define LOCAL_WGL_ACCESS_WRITE_DISCARD                       0x0002
 
 #endif // GLCONSTS_H_
