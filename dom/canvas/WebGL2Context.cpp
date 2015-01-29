@@ -30,7 +30,7 @@ WebGL2Context::~WebGL2Context()
 /*static*/ bool
 WebGL2Context::IsSupported()
 {
-    return Preferences::GetBool("webgl.enable-prototype-webgl2", false);
+    return true; //Preferences::GetBool("webgl.enable-prototype-webgl2", false);
 }
 
 /*static*/ WebGL2Context*
