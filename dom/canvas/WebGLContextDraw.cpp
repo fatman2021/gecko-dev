@@ -323,13 +323,8 @@ WebGLContext::DrawElements(GLenum mode, GLsizei count, GLenum type,
     {
         ScopedMaskWorkaround autoMask(*this);
 
-        if (gl->IsSupported(gl::GLFeature::draw_range_elements)) {
-            gl->fDrawRangeElements(mode, 0, upperBound, count, type,
-                                   reinterpret_cast<GLvoid*>(byteOffset));
-        } else {
-            gl->fDrawElements(mode, count, type,
-                              reinterpret_cast<GLvoid*>(byteOffset));
-        }
+        gl->fDrawElements(mode, count, type,
+                          reinterpret_cast<GLvoid*>(byteOffset));
     }
 
     Draw_cleanup();
