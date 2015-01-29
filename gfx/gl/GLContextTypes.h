@@ -13,6 +13,14 @@ namespace gl {
 
 class GLContext;
 
+enum class ContextProfile : uint8_t {
+    Unknown = 0,
+    OpenGL, // only for IsAtLeast's <profile> parameter
+    OpenGLCore,
+    OpenGLCompatibility,
+    OpenGLES
+};
+
 enum class GLContextType {
     Unknown,
     WGL,

@@ -145,7 +145,7 @@ GLContextCGL::SetupLookupFunction()
 bool
 GLContextCGL::IsDoubleBuffered() const
 {
-  return sCGLLibrary.UseDoubleBufferedWindows();
+    return sCGLLibrary.UseDoubleBufferedWindows();
 }
 
 bool
@@ -163,7 +163,6 @@ GLContextCGL::SwapBuffers()
   [mContext flushBuffer];
   return true;
 }
-
 
 already_AddRefed<GLContext>
 GLContextProviderCGL::CreateWrappingExisting(void*, void*)
@@ -214,9 +213,8 @@ CreateWithFormat(const NSOpenGLPixelFormatAttribute* attribs)
 already_AddRefed<GLContext>
 GLContextProviderCGL::CreateForWindow(nsIWidget *aWidget)
 {
-    if (!sCGLLibrary.EnsureInitialized()) {
+    if (!sCGLLibrary.EnsureInitialized())
         return nullptr;
-    }
 
     const NSOpenGLPixelFormatAttribute* attribs;
     if (sCGLLibrary.UseDoubleBufferedWindows()) {
@@ -225,9 +223,8 @@ GLContextProviderCGL::CreateForWindow(nsIWidget *aWidget)
         attribs = kAttribs_singleBuffered;
     }
     NSOpenGLContext* context = CreateWithFormat(attribs);
-    if (!context) {
+    if (!context)
         return nullptr;
-    }
 
     // make the context transparent
     GLint opaque = 0;
@@ -265,9 +262,8 @@ CreateOffscreenFBOContext(bool requireCompatProfile)
         profile = ContextProfile::OpenGLCompatibility;
         context = CreateWithFormat(kAttribs_offscreen);
     }
-    if (!context) {
+    if (!context)
         return nullptr;
-    }
 
     SurfaceCaps dummyCaps = SurfaceCaps::Any();
     nsRefPtr<GLContextCGL> glContext = new GLContextCGL(dummyCaps, context,

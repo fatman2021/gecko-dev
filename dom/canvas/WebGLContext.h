@@ -34,6 +34,7 @@
 #include "nsIDOMEventListener.h"
 #include "nsLayoutUtils.h"
 
+#include "GLContextTypes.h"
 #include "GLContextProvider.h"
 
 #include "mozilla/gfx/2D.h"

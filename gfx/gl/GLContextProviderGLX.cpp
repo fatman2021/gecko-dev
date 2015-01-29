@@ -1279,4 +1279,3 @@ GLContextProviderGLX::Shutdown()
 
 } /* namespace gl */
 } /* namespace mozilla */
-

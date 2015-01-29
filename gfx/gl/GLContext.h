@@ -138,14 +138,6 @@ enum class GLFeature {
     EnumMax
 };
 
-enum class ContextProfile : uint8_t {
-    Unknown = 0,
-    OpenGL, // only for IsAtLeast's <profile> parameter
-    OpenGLCore,
-    OpenGLCompatibility,
-    OpenGLES
-};
-
 enum class GLVendor {
     Intel,
     NVIDIA,

@@ -11,6 +11,8 @@
 #error GL_CONTEXT_PROVIDER_NAME not defined
 #endif
 
+#include "GLContextTypes.h"
+
 class GL_CONTEXT_PROVIDER_NAME
 {
 public:

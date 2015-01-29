@@ -263,4 +263,3 @@ TEST(Gfx, CompositorSimpleTree)
     EXPECT_TRUE(CompositeAndCompare(layerManager, refDT));
   }
 }
-
