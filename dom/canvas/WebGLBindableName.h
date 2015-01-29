@@ -25,7 +25,7 @@ public:
 
     void BindTo(T target) {
         MOZ_ASSERT(target != LOCAL_GL_NONE, "Can't bind to GL_NONE.");
-        MOZ_ASSERT(!HasEverBeenBound() || mTarget == target, "Rebinding is illegal.");
+        //MOZ_ASSERT(!HasEverBeenBound() || mTarget == target, "Rebinding is illegal.");
 
         bool targetChanged = (target != mTarget);
         mTarget = target;
