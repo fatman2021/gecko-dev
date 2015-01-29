@@ -210,7 +210,7 @@ public:
 protected:
     TexMinFilter mMinFilter;
     TexMagFilter mMagFilter;
-    TexWrap mWrapS, mWrapT;
+	TexWrap mWrapS, mWrapT, mWrapR;
 
     size_t mFacesCount, mMaxLevelWithCustomImages;
     nsTArray<ImageInfo> mImageInfos;
@@ -259,6 +259,10 @@ public:
         mMagFilter = magFilter;
         SetFakeBlackStatus(WebGLTextureFakeBlackStatus::Unknown);
     }
+	void SetWrapR(TexWrap wrapR) {
+		mWrapR = wrapR;
+		SetFakeBlackStatus(WebGLTextureFakeBlackStatus::Unknown);
+	}
     void SetWrapS(TexWrap wrapS) {
         mWrapS = wrapS;
         SetFakeBlackStatus(WebGLTextureFakeBlackStatus::Unknown);

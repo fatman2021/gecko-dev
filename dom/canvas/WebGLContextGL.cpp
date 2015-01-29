@@ -1532,6 +1532,20 @@ void WebGLContext::TexParameter_base(GLenum rawTarget, GLenum pname,
                     pnameAndParamAreIncompatible = true;
             }
             break;
+		case LOCAL_GL_TEXTURE_WRAP_R:
+			if (!IsWebGL2())
+				return ErrorInvalidEnumInfo("texParameter: pname", pname);
+
+			switch (intParam) {
+			case LOCAL_GL_CLAMP_TO_EDGE:
+			case LOCAL_GL_MIRRORED_REPEAT:
+			case LOCAL_GL_REPEAT:
+				tex->SetWrapR(intParam);
+				break;
+			default:
+				pnameAndParamAreIncompatible = true;
+			}
+			break;
         case LOCAL_GL_TEXTURE_WRAP_S:
             switch (intParam) {
                 case LOCAL_GL_CLAMP_TO_EDGE:
