@@ -3207,6 +3207,12 @@ GLenum WebGLContext::CheckedTexImage2D(TexImageTarget texImageTarget,
                                              &driverFormat,
                                              &driverType);
 
+    // printf_stderr("CheckedTexImage2D: %s -> %s, %s, %s\n",
+    //               EnumName(effectiveInternalFormat.get()),
+    //               EnumName(driverInternalFormat),
+    //               EnumName(driverFormat),
+    //               EnumName(driverType));
+
     if (sizeMayChange) {
         GetAndFlushUnderlyingGLErrors();
     }
@@ -3364,10 +3370,10 @@ WebGLContext::TexImage2D_base(TexImageTarget texImageTarget, GLint level,
 
     if (error) {
 
-        GenerateWarning("WebGL::TexImage2D_base((target) %s, (level) %d, (internalformat) %s, (width) %d, (height) %d, "
-                        "(format) %s, (type) %s, (data) %p) generated error %s",
-                        EnumName(texImageTarget.get()), level, EnumName(internalformat), width, height,
-                        EnumName(format), EnumName(type), data, ErrorName(error));
+        GenerateWarning("WebGL::TexImage2D_base((target) %s, (level) %d, (internalformat) %s(0x%04X), (width) %d, (height) %d, "
+                        "(format) %s(0x%04X), (type) %s(0x%04X), (data) %p) generated error %s",
+                        EnumName(texImageTarget.get()), level, EnumName(internalformat), internalformat, width, height,
+                        EnumName(format), format, EnumName(type), type, data, ErrorName(error));
         return;
     }
 
