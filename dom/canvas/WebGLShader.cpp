@@ -345,6 +345,25 @@ WebGLShader::FindUniformByMappedName(const nsACString& mappedName,
     return true;
 }
 
+bool
+WebGLShader::FindAttribMappedNameByUserName(const nsACString& userName,
+                                            nsCString* const out_mappedName) const
+{
+    if (!mValidator) {
+        *out_mappedName = userName;
+        return true;
+    }
+
+    std::string userNameStr(userName.BeginReading());
+    const std::string* mappedNameStr = &userNameStr;
+
+    if (!mValidator->FindAttribMappedNameByUserName(userNameStr, &mappedNameStr))
+        return false;
+
+    *out_mappedName = mappedNameStr->c_str();
+    return true;
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 // Boilerplate
 

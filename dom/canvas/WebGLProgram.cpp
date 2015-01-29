@@ -228,6 +228,7 @@ CreateProgram(gl::GLContext* gl)
 WebGLProgram::WebGLProgram(WebGLContext* webgl)
     : WebGLContextBoundObject(webgl)
     , mGLName(CreateProgram(webgl->GL()))
+    , mTransformVaryingCount(0)
 {
     mContext->mPrograms.insertBack(this);
 }
@@ -465,9 +466,11 @@ WebGLProgram::GetProgramParameter(GLenum pname) const
         switch (pname) {
         case LOCAL_GL_ACTIVE_UNIFORM_BLOCKS:
             return JS::Int32Value(GetProgramiv(gl, mGLName, pname));
-        }
-    }
 
+        case LOCAL_GL_TRANSFORM_FEEDBACK_VARYINGS:
+            return JS::Int32Value(mTransformVaryingCount);
+       }
+    }
 
     switch (pname) {
     case LOCAL_GL_ATTACHED_SHADERS:
@@ -711,6 +714,78 @@ WebGLProgram::FindUniformByMappedName(const nsACString& mappedName,
         return true;
 
     return false;
+}
+
+void
+WebGLProgram::TransformFeedbackVaryings(const dom::Sequence<nsString>& varyings,
+                                        GLenum bufferMode)
+{
+    const GLsizei varyingCount = varyings.Length();
+    UniquePtr<const GLchar*[]> tmpVaryings(new const GLchar*[varyingCount]);
+    for (GLsizei n = 0; n < varyingCount; n++) {
+        NS_LossyConvertUTF16toASCII varyingName(varyings[n]);
+        nsCString translatedName;
+        if (!mVertShader->FindAttribMappedNameByUserName(varyingName, &translatedName)) {
+            mContext->GenerateWarning("transformFeedbackVarying: varying `%s' not "
+                                      "found.", varyingName.BeginReading());
+            translatedName = varyingName;
+        }
+
+        tmpVaryings[n] = translatedName.BeginReading();
+    }
+
+    gl::GLContext* gl = mContext->GL();
+    gl->MakeCurrent();
+    gl->fTransformFeedbackVaryings(mGLName, varyingCount, tmpVaryings.get(), bufferMode);
+
+    mTransformVaryingCount = varyingCount;
+}
+
+already_AddRefed<WebGLActiveInfo>
+WebGLProgram::GetTransformFeedbackVarying(GLuint index)
+{
+    nsRefPtr<WebGLActiveInfo> ret = WebGLActiveInfo::CreateInvalid(mContext);
+
+    if (index >= mTransformVaryingCount)
+    {
+        mContext->ErrorInvalidValue("getTransformFeedbackVarying: `index` is greater or "
+                                    "equal to TRANSFORM_FEEDBACK_VARYINGS.");
+        return ret.forget();
+    }
+
+    if (!IsLinked()) {
+        mContext->ErrorInvalidOperation("getTransformFeedbackVarying: `program` must be "
+                                        "linked.");
+        return ret.forget();
+    }
+
+    gl::GLContext* gl = mContext->GL();
+    GLint len = 0;
+
+    gl->MakeCurrent();
+    gl->fGetProgramiv(mGLName, LOCAL_GL_TRANSFORM_FEEDBACK_VARYING_MAX_LENGTH, &len);
+    if (!len)
+        return ret.forget();
+
+    UniquePtr<char[]> name(new char[len]);
+    GLint tfsize = 0;
+    GLuint tftype = 0;
+
+    gl->fGetTransformFeedbackVarying(mGLName, index, len, &len, &tfsize, &tftype,
+                                     name.get());
+    if (len == 0 || tfsize == 0 || tftype == 0)
+        return ret.forget();
+
+    const auto& activeList = mMostRecentLinkInfo->activeAttribs;
+    for (size_t n = 0; n < activeList.size(); n++) {
+        if (activeList[n]->mBaseMappedName == name.get()) {
+            ret = activeList[n];
+            return ret.forget();
+        }
+    }
+
+    MOZ_ASSERT(false, "Shouldn't get here.");
+    return ret.forget();
 }
 
 ////////////////////////////////////////////////////////////////////////////////

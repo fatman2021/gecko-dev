@@ -52,6 +52,9 @@ public:
                                  nsCString* const out_userName,
                                  bool* const out_isArray) const;
 
+    bool FindAttribMappedNameByUserName(const nsACString& userName,
+                                        nsCString* const out_mappedName) const;
+
     bool IsCompiled() const {
         return mTranslationSuccessful && mCompilationSuccessful;
     }
