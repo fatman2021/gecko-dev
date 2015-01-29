@@ -452,11 +452,32 @@ static const FeatureInfo sFeatureInfoArr[] = {
     },
     {
         "sRGB",
-        GLVersion::GL3,
+        GLVersion::NONE,
+        GLESVersion::NONE,
+        GLContext::Extension_None,
+        {
+            GLContext::Extensions_End
+        }
+    },
+    {
+        "sRGB_texture",
+        GLVersion::GL2_1,
         GLESVersion::ES3,
         GLContext::Extension_None,
         {
             GLContext::EXT_sRGB,
+            GLContext::EXT_texture_sRGB,
+            GLContext::Extensions_End
+        }
+    },
+    {
+        "sRGB_framebuffer",
+        GLVersion::GL3,
+        GLESVersion::ES3,
+        GLContext::ARB_framebuffer_sRGB,
+        {
+            GLContext::EXT_framebuffer_sRGB,
+            GLContext::EXT_sRGB_write_control,
             GLContext::Extensions_End
         }
     },
@@ -691,6 +712,7 @@ GLContext::GetFeatureName(GLFeature feature)
     return GetFeatureInfo(feature).mName;
 }
 
+/*
 static bool
 CanReadSRGBFromFBOTexture(GLContext* gl)
 {
@@ -708,6 +730,7 @@ CanReadSRGBFromFBOTexture(GLContext* gl)
 #endif // XP_MACOSX
     return true;
 }
+*/
 
 void
 GLContext::InitFeatures()
@@ -748,15 +771,10 @@ GLContext::InitFeatures()
 
     // Bug 843668: Work around limitation of the feature system.
     // For sRGB support under OpenGL to match OpenGL ES spec, check for both
-    // EXT_texture_sRGB and EXT_framebuffer_sRGB is required.
-    const bool aresRGBExtensionsAvailable =
-        IsExtensionSupported(EXT_texture_sRGB) &&
-        (IsExtensionSupported(ARB_framebuffer_sRGB) ||
-         IsExtensionSupported(EXT_framebuffer_sRGB));
-
+    // GLFeature::sRGB_texture and GLFeature::sRGB_framebuffer.
     mAvailableFeatures[size_t(GLFeature::sRGB)] =
-        aresRGBExtensionsAvailable &&
-        CanReadSRGBFromFBOTexture(this);
+        mAvailableFeatures[size_t(GLFeature::sRGB_framebuffer)] &&
+        mAvailableFeatures[size_t(GLFeature::sRGB_texture)];
 }
 
 void
