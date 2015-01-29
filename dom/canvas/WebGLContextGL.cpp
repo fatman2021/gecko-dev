@@ -3360,7 +3360,11 @@ WebGLContext::TexImage2D_base(TexImageTarget texImageTarget, GLint level,
                                      height, border, format, type, pixels);
 
     if (error) {
-        GenerateWarning("texImage2D generated error %s", ErrorName(error));
+
+        GenerateWarning("WebGL::TexImage2D_base((target) %s, (level) %d, (internalformat) %s, (width) %d, (height) %d, "
+                        "(format) %s, (type) %s, (data) %p) generated error %s",
+                        EnumName(texImageTarget.get()), level, EnumName(internalformat), width, height,
+                        EnumName(format), EnumName(type), data, ErrorName(error));
         return;
     }
 
