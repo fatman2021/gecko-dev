@@ -1382,8 +1382,10 @@ WebGLContext::ValidateTexImage(TexImageTarget texImageTarget, GLint level,
                     exceptionallyAllowed = true;
                 }
                 if (!exceptionallyAllowed) {
-                    ErrorInvalidOperation("%s: `internalformat` does not match"
-                                          " `format` and `type`.", info);
+                    ErrorInvalidOperation("%s: `internalformat`(%s) does not match"
+                                          " `format`(%s) and `type`(%s).", info,
+                                          EnumName(internalFormat), EnumName(format),
+                                          EnumName(type));
                     return false;
                 }
             }
