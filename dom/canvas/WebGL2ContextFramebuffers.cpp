@@ -364,6 +364,13 @@ TranslateDefaultAttachments(const dom::Sequence<GLenum>& in, dom::Sequence<GLenu
 void
 WebGL2Context::InvalidateFramebuffer(GLenum target, const dom::Sequence<GLenum>& attachments)
 {
+    // InvalidateFramebuffer is a hint to the driver. Should be OK to
+    // skip calls if not supported, for example by OSX 10.9 GL
+    // drivers.
+    static bool invalidateFBSupported = gl->IsSupported(gl::GLFeature::invalidate_framebuffer);
+    if (!invalidateFBSupported)
+        return;
+
     if (IsContextLost())
         return;
 
@@ -411,6 +418,13 @@ void
 WebGL2Context::InvalidateSubFramebuffer(GLenum target, const dom::Sequence<GLenum>& attachments,
                                         GLint x, GLint y, GLsizei width, GLsizei height)
 {
+    // InvalidateFramebuffer is a hint to the driver. Should be OK to
+    // skip calls if not supported, for example by OSX 10.9 GL
+    // drivers.
+    static bool invalidateFBSupported = gl->IsSupported(gl::GLFeature::invalidate_framebuffer);
+    if (!invalidateFBSupported)
+        return;
+
     if (IsContextLost())
         return;
 
