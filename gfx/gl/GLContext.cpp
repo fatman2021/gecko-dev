@@ -1506,13 +1506,17 @@ GLContext::InitWithPrefix(const char *prefix, bool trygl)
 
         if (DebugMode() && IsExtensionSupported(KHR_debug)) {
             fEnable(LOCAL_GL_DEBUG_OUTPUT);
-            fDisable(LOCAL_GL_DEBUG_OUTPUT_SYNCHRONOUS);
+            fEnable(LOCAL_GL_DEBUG_OUTPUT_SYNCHRONOUS);
             fDebugMessageCallback(&StaticDebugCallback, (void*)this);
             fDebugMessageControl(LOCAL_GL_DONT_CARE,
                                  LOCAL_GL_DONT_CARE,
                                  LOCAL_GL_DONT_CARE,
                                  0, nullptr,
                                  true);
+            GLuint error;
+            while ((error = fGetError()) != LOCAL_GL_NO_ERROR) {
+                printf_stderr("Error when configuring KHR_debug callback: 0x%04X\n", error);
+            }
         }
 
         reporter.SetSuccessful();
