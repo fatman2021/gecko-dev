@@ -180,6 +180,7 @@ SharedSurface_D3D11Interop::~SharedSurface_D3D11Interop()
 {
     mWGL->fDXUnlockObjects(mWGLD3DDevice, 1, &mTextureWGL);
     mWGL->fDXUnregisterObject(mWGLD3DDevice, mTextureWGL);
+    mGL->fDeleteTextures(1, &mProdTex);
 }
 
 void

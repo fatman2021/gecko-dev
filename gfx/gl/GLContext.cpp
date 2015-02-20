@@ -303,6 +303,11 @@ GLContext::GLContext(const SurfaceCaps& caps,
     mHeavyGLCallsSinceLastFlush(false)
 {
     mOwningThreadId = PlatformThread::CurrentId();
+
+    mCountVB = 0;
+    mCountRB = 0;
+    mCountTex = 0;
+    mCountFB = 0;
 }
 
 GLContext::~GLContext() {
@@ -1513,6 +1518,11 @@ GLContext::InitWithPrefix(const char *prefix, bool trygl)
                                  LOCAL_GL_DONT_CARE,
                                  0, nullptr,
                                  true);
+            fDebugMessageControl(LOCAL_GL_DONT_CARE,
+                                 LOCAL_GL_DONT_CARE,
+                                 LOCAL_GL_DEBUG_SEVERITY_LOW,
+                                 0, nullptr,
+                                 false);
             GLuint error;
             while ((error = fGetError()) != LOCAL_GL_NO_ERROR) {
                 printf_stderr("Error when configuring KHR_debug callback: 0x%04X\n", error);
@@ -2555,6 +2565,14 @@ GLContext::Readback(SharedSurface* src, gfx::DataSourceSurface* dest)
         if (prev)
             prev->LockProd();
     }
+}
+
+
+/*static*/ void
+GLContext::AdjustObjectCount(const char* desc, int32_t diff, int32_t* const out_count)
+{
+    *out_count += diff;
+    printf_stderr("%s count: %i\n", desc, *out_count);
 }
 
 } /* namespace gl */

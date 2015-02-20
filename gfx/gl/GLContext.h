@@ -13,6 +13,7 @@
 #include <map>
 #include <bitset>
 #include <queue>
+#include <set>
 
 #ifdef DEBUG
 #include <string.h>
@@ -2140,25 +2141,40 @@ private:
         return ret;
     }
 
+    int32_t mCountVB;
+    int32_t mCountRB;
+    int32_t mCountTex;
+    int32_t mCountFB;
+
+    static MOZ_NEVER_INLINE void AdjustObjectCount(const char* desc, int32_t diff, int32_t* const out_count);
+
     void raw_fGenBuffers(GLsizei n, GLuint* names) {
+        AdjustObjectCount("vb", n, &mCountVB);
+
         BEFORE_GL_CALL;
         mSymbols.fGenBuffers(n, names);
         AFTER_GL_CALL;
     }
 
     void raw_fGenFramebuffers(GLsizei n, GLuint* names) {
+        AdjustObjectCount("fb", n, &mCountFB);
+
         BEFORE_GL_CALL;
         mSymbols.fGenFramebuffers(n, names);
         AFTER_GL_CALL;
     }
 
     void raw_fGenRenderbuffers(GLsizei n, GLuint* names) {
+        AdjustObjectCount("rb", n, &mCountRB);
+
         BEFORE_GL_CALL;
         mSymbols.fGenRenderbuffers(n, names);
         AFTER_GL_CALL;
     }
 
     void raw_fGenTextures(GLsizei n, GLuint* names) {
+        AdjustObjectCount("tex", n, &mCountTex);
+
         BEFORE_GL_CALL;
         mSymbols.fGenTextures(n, names);
         AFTER_GL_CALL;
@@ -2211,24 +2227,53 @@ private:
     }
 
     void raw_fDeleteBuffers(GLsizei n, const GLuint* names) {
+        std::set<GLuint> nameSet;
+        for (GLsizei i = 0; i < n; i++) {
+            if (names[i])
+              nameSet.insert(names[i]);
+        }
+        AdjustObjectCount("vb", -(int32_t)nameSet.size(), &mCountVB);
+
         BEFORE_GL_CALL;
         mSymbols.fDeleteBuffers(n, names);
         AFTER_GL_CALL;
     }
 
     void raw_fDeleteFramebuffers(GLsizei n, const GLuint* names) {
+        std::set<GLuint> nameSet;
+        for (GLsizei i = 0; i < n; i++) {
+            if (names[i])
+              nameSet.insert(names[i]);
+        }
+
+        AdjustObjectCount("fb", -(int32_t)nameSet.size(), &mCountFB);
+
         BEFORE_GL_CALL;
         mSymbols.fDeleteFramebuffers(n, names);
         AFTER_GL_CALL;
     }
 
     void raw_fDeleteRenderbuffers(GLsizei n, const GLuint* names) {
+        std::set<GLuint> nameSet;
+        for (GLsizei i = 0; i < n; i++) {
+            if (names[i])
+              nameSet.insert(names[i]);
+        }
+        AdjustObjectCount("rb", -(int32_t)nameSet.size(), &mCountRB);
+
         BEFORE_GL_CALL;
         mSymbols.fDeleteRenderbuffers(n, names);
         AFTER_GL_CALL;
     }
 
     void raw_fDeleteTextures(GLsizei n, const GLuint* names) {
+        std::set<GLuint> nameSet;
+        for (GLsizei i = 0; i < n; i++) {
+            if (names[i])
+              nameSet.insert(names[i]);
+        }
+        AdjustObjectCount("tex", -(int32_t)nameSet.size(), &mCountTex);
+
         BEFORE_GL_CALL;
         mSymbols.fDeleteTextures(n, names);
         AFTER_GL_CALL;
