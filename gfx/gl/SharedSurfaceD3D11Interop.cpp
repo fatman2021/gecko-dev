@@ -9,8 +9,8 @@
 #include "GLContext.h"
 #include "WGLLibrary.h"
 
-using namespace mozilla::gfx;
-using namespace mozilla::gl;
+namespace mozilla {
+namespace gl {
 
 /*
 Sample Code for WGL_NV_DX_interop2:
@@ -109,149 +109,220 @@ while (!done) {
 */
 
 ////////////////////////////////////////////////////////////////////////////////
+// DXGL Device
+
+class DXGLDevice : public RefCounted<DXGLDevice>
+{
+public:
+    MOZ_DECLARE_REFCOUNTED_TYPENAME(DXGLDevice)
+
+    WGLLibrary* const mWGL;
+    const HANDLE mDeviceHandle;
+    const RefPtr<ID3D11Device> mD3D; // Only needed for lifetime guarantee.
+
+    static TemporaryRef<DXGLDevice> Open(WGLLibrary* wgl,
+                                         const RefPtr<ID3D11Device>& d3d)
+    {
+        MOZ_ASSERT(wgl->HasDXInterop2());
+
+        HANDLE deviceHandle = wgl->fDXOpenDevice(d3d);
+        if (!deviceHandle) {
+            NS_WARNING("Failed to open D3D device for use by WGL.");
+            return nullptr;
+        }
+
+        return new DXGLDevice(wgl, deviceHandle, d3d);
+    }
+
+protected:
+    DXGLDevice(WGLLibrary* wgl, HANDLE deviceHandle, const RefPtr<ID3D11Device>& d3d)
+        : mWGL(wgl)
+        , mDeviceHandle(deviceHandle)
+        , mD3D(d3d)
+    { }
+
+public:
+    ~DXGLDevice() {
+        if (!mWGL->fDXCloseDevice(mDeviceHandle)) {
+            uint32_t error = GetLastError();
+            printf_stderr("wglDXCloseDevice(0x%x) failed: GetLastError(): 0x%x\n",
+                          mDeviceHandle, error);
+        }
+    }
+
+    HANDLE RegisterObject(void* dxObject, GLuint name, GLenum type, GLenum access) const {
+        HANDLE ret = mWGL->fDXRegisterObject(mDeviceHandle, dxObject, name, type, access);
+        if (!ret) {
+            uint32_t error = GetLastError();
+            printf_stderr("wglDXRegisterObject(0x%x, 0x%x, %u, 0x%x, 0x%x) failed:"
+                          " GetLastError(): 0x%x\n", mDeviceHandle, dxObject, name, type,
+                          access, error);
+        }
+        return ret;
+    }
+
+    bool UnregisterObject(HANDLE hObject) const {
+        bool ret = mWGL->fDXUnregisterObject(mDeviceHandle, hObject);
+        if (!ret) {
+            uint32_t error = GetLastError();
+            printf_stderr("wglDXUnregisterObject(0x%x, 0x%x) failed: GetLastError():"
+                          " 0x%x\n", mDeviceHandle, hObject, error);
+        }
+        return ret;
+    }
+
+    bool LockObject(HANDLE hObject) const {
+        bool ret = mWGL->fDXLockObjects(mDeviceHandle, 1, &hObject);
+        if (!ret) {
+            uint32_t error = GetLastError();
+            printf_stderr("wglDXLockObjects(0x%x, 1, {0x%x}) failed: GetLastError():"
+                          " 0x%x\n", mDeviceHandle, hObject, error);
+        }
+        return ret;
+    }
+
+    bool UnlockObject(HANDLE hObject) const {
+        bool ret = mWGL->fDXUnlockObjects(mDeviceHandle, 1, &hObject);
+        if (!ret) {
+            uint32_t error = GetLastError();
+            printf_stderr("wglDXUnlockObjects(0x%x, 1, {0x%x}) failed: GetLastError():"
+                          " 0x%x\n", mDeviceHandle, hObject, error);
+        }
+        return ret;
+    }
+};
+
+////////////////////////////////////////////////////////////////////////////////
 // Shared Surface
 
 /*static*/ UniquePtr<SharedSurface_D3D11Interop>
-SharedSurface_D3D11Interop::Create(GLContext* gl,
-                                   WGLLibrary* wgl,
-                                   HANDLE mWGLD3DDevice,
-                                   ID3D11Device* d3d,
-                                   const gfx::IntSize& size,
-                                   bool hasAlpha)
+SharedSurface_D3D11Interop::Create(const RefPtr<DXGLDevice>& dxgl, GLContext* gl,
+                                   const gfx::IntSize& size, bool hasAlpha)
 {
+    ID3D11Device* d3d = dxgl->mD3D;
+
     // Create a texture in case we need to readback.
     DXGI_FORMAT format = hasAlpha ? DXGI_FORMAT_B8G8R8A8_UNORM
                                   : DXGI_FORMAT_B8G8R8X8_UNORM;
     CD3D11_TEXTURE2D_DESC desc(format, size.width, size.height, 1, 1);
-    nsRefPtr<ID3D11Texture2D> textureD3D;
-    HRESULT hr = d3d->CreateTexture2D(&desc, nullptr, getter_AddRefs(textureD3D));
+
+    RefPtr<ID3D11Texture2D> textureD3D;
+    HRESULT hr = d3d->CreateTexture2D(&desc, nullptr, byRef(textureD3D));
     if (FAILED(hr)) {
         NS_WARNING("Failed to create texture for CanvasLayer!");
         return nullptr;
     }
 
-    GLuint textureGL = 0;
+    GLuint renderbufferGL = 0;
     gl->MakeCurrent();
-    gl->fGenTextures(1, &textureGL);
-    HANDLE textureWGL = wgl->fDXRegisterObject(mWGLD3DDevice,
-                                               textureD3D,
-                                               textureGL,
-                                               LOCAL_GL_TEXTURE_2D,
-                                               // LOCAL_WGL_ACCESS_READ_WRITE);
-                                               LOCAL_WGL_ACCESS_WRITE_DISCARD_NV);
-    //gl->fBindTexture(LOCAL_GL_TEXTURE_2D, textureGL);
-    //gl->fTexParameteri(LOCAL_GL_TEXTURE_2D, LOCAL_GL_TEXTURE_BASE_LEVEL, 0);
-    //gl->fTexParameteri(LOCAL_GL_TEXTURE_2D, LOCAL_GL_TEXTURE_MAX_LEVEL, 0);
-    //gl->fBindTexture(LOCAL_GL_TEXTURE_2D, 0);
-
-    if (!textureWGL) {
+    gl->fGenRenderbuffers(1, &renderbufferGL);
+    HANDLE objectWGL = dxgl->RegisterObject(textureD3D, renderbufferGL,
+                                            LOCAL_GL_RENDERBUFFER,
+                                            LOCAL_WGL_ACCESS_READ_WRITE);
+                                            //LOCAL_WGL_ACCESS_WRITE_DISCARD_NV);
+    if (!objectWGL) {
         NS_WARNING("Failed to register D3D object with WGL.");
         return nullptr;
     }
 
     typedef SharedSurface_D3D11Interop ptrT;
-    UniquePtr<ptrT> ret ( new ptrT(gl, textureGL, wgl, mWGLD3DDevice, textureWGL,
-                                   textureD3D, size, hasAlpha) );
-
+    UniquePtr<ptrT> ret ( new ptrT(gl, size, hasAlpha, renderbufferGL, dxgl, objectWGL,
+                                   textureD3D) );
     return Move(ret);
 }
 
 SharedSurface_D3D11Interop::SharedSurface_D3D11Interop(GLContext* gl,
-                                                       GLuint textureGL,
-                                                       WGLLibrary* wgl,
-                                                       HANDLE wglD3DDevice,
-                                                       HANDLE textureWGL,
-                                                       ID3D11Texture2D* textureD3D,
                                                        const gfx::IntSize& size,
-                                                       bool hasAlpha)
+                                                       bool hasAlpha,
+                                                       GLuint renderbufferGL,
+                                                       const RefPtr<DXGLDevice>& dxgl,
+                                                       HANDLE objectWGL,
+                                                       const RefPtr<ID3D11Texture2D>& textureD3D)
     : SharedSurface(SharedSurfaceType::DXGLInterop2,
-                    AttachmentType::GLTexture,
+                    AttachmentType::GLRenderbuffer,
                     gl,
                     size,
                     hasAlpha)
-    , mProdTex(textureGL)
-    , mWGL(wgl)
-    , mWGLD3DDevice(wglD3DDevice)
-    , mTextureWGL(textureWGL)
+    , mProdRB(renderbufferGL)
+    , mDXGL(dxgl)
+    , mObjectWGL(objectWGL)
     , mConsumerTexture(textureD3D)
-{}
+    , mLockedForGL(false)
+{
+    //printf_stderr("0x%08x<D3D11Interop>::ctor\n", this);
+}
 
 SharedSurface_D3D11Interop::~SharedSurface_D3D11Interop()
 {
-    mWGL->fDXUnlockObjects(mWGLD3DDevice, 1, &mTextureWGL);
-    mWGL->fDXUnregisterObject(mWGLD3DDevice, mTextureWGL);
-    mGL->fDeleteTextures(1, &mProdTex);
+    //printf_stderr("0x%08x<D3D11Interop>::dtor\n", this);
+    MOZ_ASSERT(!mLockedForGL);
+
+    mGL->fDeleteRenderbuffers(1, &mProdRB);
+
+    if (!mDXGL->UnregisterObject(mObjectWGL))
+        NS_WARNING("Failed to release a DXGL object, possibly leaking it.");
+
+    // mDXGL is closed when it runs out of refs.
 }
 
 void
-SharedSurface_D3D11Interop::LockProdImpl()
+SharedSurface_D3D11Interop::ProducerAcquireImpl()
 {
-    // printf_stderr("0x%08x<D3D11Interop>::LockProd\n", this);
-    MOZ_ALWAYS_TRUE( mWGL->fDXLockObjects(mWGLD3DDevice, 1, &mTextureWGL) );
+    //printf_stderr("0x%08x<D3D11Interop>::LockProd: 0x%ul\n", this, mObjectWGL);
+    MOZ_ASSERT(!mLockedForGL);
+
+    MOZ_ALWAYS_TRUE( mDXGL->LockObject(mObjectWGL) );
+
+    mLockedForGL = true;
 }
 
 void
-SharedSurface_D3D11Interop::UnlockProdImpl()
+SharedSurface_D3D11Interop::ProducerReleaseImpl()
 {
-    // printf_stderr("0x%08x<D3D11Interop>::UnlockProd\n", this);
-    MOZ_ALWAYS_TRUE( mWGL->fDXUnlockObjects(mWGLD3DDevice, 1, &mTextureWGL) );
+    //printf_stderr("0x%08x<D3D11Interop>::UnlockProd: 0x%ul\n", this, mObjectWGL);
+    MOZ_ASSERT(mLockedForGL);
+
+    MOZ_ALWAYS_TRUE( mDXGL->UnlockObject(mObjectWGL) );
+
+    mLockedForGL = false;
 }
 
-void
-SharedSurface_D3D11Interop::Fence()
-{
-    // mGL->fFinish();
-}
-
-bool
-SharedSurface_D3D11Interop::WaitSync()
-{
-    // Since we glFinish in Fence(), we're always going to be resolved here.
-    return true;
-}
-
-bool
-SharedSurface_D3D11Interop::PollSync()
-{
-    return true;
-}
-
-////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////
 // Factory
 
 /*static*/ UniquePtr<SurfaceFactory_D3D11Interop>
-SurfaceFactory_D3D11Interop::Create(GLContext* gl,
-                                    ID3D11Device* d3d,
+SurfaceFactory_D3D11Interop::Create(const RefPtr<ID3D11Device>& d3d, GLContext* gl,
                                     const SurfaceCaps& caps)
 {
     WGLLibrary* wgl = &sWGLLib;
     if (!wgl || !wgl->HasDXInterop2())
         return nullptr;
 
-    HANDLE wglD3DDevice = wgl->fDXOpenDevice(d3d);
-    if (!wglD3DDevice) {
+    RefPtr<DXGLDevice> dxgl = DXGLDevice::Open(wgl, d3d);
+    if (!dxgl) {
         NS_WARNING("Failed to open D3D device for use by WGL.");
         return nullptr;
     }
 
     typedef SurfaceFactory_D3D11Interop ptrT;
-    UniquePtr<ptrT> ret( new ptrT(gl, wgl, wglD3DDevice, d3d, caps) );
+    UniquePtr<ptrT> ret( new ptrT(gl, caps, dxgl) );
 
     return Move(ret);
 }
 
 SurfaceFactory_D3D11Interop::SurfaceFactory_D3D11Interop(GLContext* gl,
-                                                         WGLLibrary* wgl,
-                                                         HANDLE wglD3DDevice,
-                                                         ID3D11Device* d3d,
-                                                         const SurfaceCaps& caps)
+                                                         const SurfaceCaps& caps,
+                                                         const RefPtr<DXGLDevice>& dxgl)
     : SurfaceFactory(gl, SharedSurfaceType::DXGLInterop2, caps)
-    , mWGL(wgl)
-    , mWGLD3DDevice(wglD3DDevice)
-    , mD3D(d3d)
-{}
+    , mDXGL(dxgl)
+{
+    //printf_stderr("SurfaceFactory_D3D11Interop::ctor()\n");
+}
 
 SurfaceFactory_D3D11Interop::~SurfaceFactory_D3D11Interop()
 {
-    mWGL->fDXCloseDevice(mWGLD3DDevice);
+    //printf_stderr("SurfaceFactory_D3D11Interop::dtor()\n");
 }
+
+} // namespace gl
+} // namespace mozilla

@@ -20,6 +20,7 @@
 #include "gfxPrefs.h"                   // for WebGLForceLayersReadback
 
 #ifdef XP_WIN
+#include <d3d11.h>
 #include "SharedSurfaceANGLE.h"         // for SurfaceFactory_ANGLEShareHandle
 #include "SharedSurfaceD3D11Interop.h"  // for SurfaceFactory_D3D11Interop
 #include "gfxWindowsPlatform.h"
@@ -117,8 +118,8 @@ ClientCanvasLayer::Initialize(const Data& aData)
         }
 
         if (!factory) {
-          ID3D11Device* d3d = gfxWindowsPlatform::GetPlatform()->GetD3D11Device();
-          factory = SurfaceFactory_D3D11Interop::Create(mGLContext, d3d, caps);
+          const auto& d3d = gfxWindowsPlatform::GetPlatform()->GetD3D11Device();
+          factory = SurfaceFactory_D3D11Interop::Create(d3d, mGLContext, caps);
         }
 #endif
         break;

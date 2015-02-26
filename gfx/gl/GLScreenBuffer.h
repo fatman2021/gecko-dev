@@ -245,7 +245,7 @@ public:
 
 protected:
     // Returns false on error or inability to resize.
-    bool Swap(const gfx::IntSize& size);
+    bool Swap(const gfx::IntSize& size, bool discardCurrent = false);
 
 public:
     bool PublishFrame(const gfx::IntSize& size);

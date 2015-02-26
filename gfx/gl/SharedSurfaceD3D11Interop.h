@@ -15,19 +15,38 @@ struct ID3D11ShaderResourceView;
 namespace mozilla {
 namespace gl {
 
+class DXGLDevice;
 class GLContext;
 class WGLLibrary;
 
 class SharedSurface_D3D11Interop
     : public SharedSurface
 {
+    const GLuint mProdRB;
+    const RefPtr<DXGLDevice> mDXGL;
+    const HANDLE mObjectWGL;
+    const RefPtr<ID3D11Texture2D> mConsumerTexture;
+
+protected:
+    bool mLockedForGL;
+
 public:
-    static UniquePtr<SharedSurface_D3D11Interop> Create(GLContext* gl,
-                                                        WGLLibrary* wgl,
-                                                        HANDLE mWGLD3DDevice,
-                                                        ID3D11Device* d3d,
+    static UniquePtr<SharedSurface_D3D11Interop> Create(const RefPtr<DXGLDevice>& dxgl,
+                                                        GLContext* gl,
                                                         const gfx::IntSize& size,
                                                         bool hasAlpha);
+
+protected:
+    SharedSurface_D3D11Interop(GLContext* gl, const gfx::IntSize& size, bool hasAlpha,
+                               GLuint renderbufferGL, const RefPtr<DXGLDevice>& dxgl,
+                               HANDLE objectWGL,
+                               const RefPtr<ID3D11Texture2D>& textureD3D);
+
+    virtual void LockProdImpl() MOZ_OVERRIDE { }
+    virtual void UnlockProdImpl() MOZ_OVERRIDE { }
+
+public:
+    virtual ~SharedSurface_D3D11Interop();
 
     static SharedSurface_D3D11Interop* Cast(SharedSurface* surf) {
         MOZ_ASSERT(surf->mType == SharedSurfaceType::DXGLInterop2);
@@ -35,38 +54,15 @@ public:
         return (SharedSurface_D3D11Interop*)surf;
     }
 
-protected:
-    GLuint mProdTex;
-    WGLLibrary* const mWGL;
-    HANDLE mWGLD3DDevice;
-    HANDLE mTextureWGL;
-    RefPtr<ID3D11Texture2D> mConsumerTexture;
+    virtual void ProducerAcquireImpl() MOZ_OVERRIDE;
+    virtual void ProducerReleaseImpl() MOZ_OVERRIDE;
 
-    SharedSurface_D3D11Interop(GLContext* gl,
-                               GLuint textureGL,
-                               WGLLibrary* wgl,
-                               HANDLE wglD3DDevice,
-                               HANDLE textureWGL,
-                               ID3D11Texture2D* textureD3D,
-                               const gfx::IntSize& size,
-                               bool hasAlpha);
-
-public:
-    virtual ~SharedSurface_D3D11Interop();
-
-    virtual void LockProdImpl() MOZ_OVERRIDE;
-    virtual void UnlockProdImpl() MOZ_OVERRIDE;
-
-    virtual void Fence() MOZ_OVERRIDE;
-    virtual bool WaitSync() MOZ_OVERRIDE;
-    virtual bool PollSync() MOZ_OVERRIDE;
-
-    virtual GLuint ProdTexture() MOZ_OVERRIDE {
-        return mProdTex;
-    }
+    virtual void Fence() MOZ_OVERRIDE { }
+    virtual bool WaitSync() MOZ_OVERRIDE { return true; }
+    virtual bool PollSync() MOZ_OVERRIDE { return true; }
 
     virtual GLuint ProdRenderbuffer() MOZ_OVERRIDE {
-        return mProdTex;
+        return mProdRB;
     }
 
     // Implementation-specific functions below:
@@ -79,31 +75,25 @@ public:
 class SurfaceFactory_D3D11Interop
     : public SurfaceFactory
 {
-protected:
-    WGLLibrary* const mWGL;
-    const HANDLE mWGLD3DDevice;
-    nsRefPtr<ID3D11Device> mD3D;
-
 public:
-    static UniquePtr<SurfaceFactory_D3D11Interop> Create(GLContext* gl,
-                                                         ID3D11Device* d3d,
+    const RefPtr<DXGLDevice> mDXGL;
+
+    static UniquePtr<SurfaceFactory_D3D11Interop> Create(const RefPtr<ID3D11Device>& d3d,
+                                                         GLContext* gl,
                                                          const SurfaceCaps& caps);
 
 protected:
-    SurfaceFactory_D3D11Interop(GLContext* gl,
-                                WGLLibrary* wgl,
-                                HANDLE wglD3DDevice,
-                                ID3D11Device* d3d,
-                                const SurfaceCaps& caps);
-
-    virtual UniquePtr<SharedSurface> CreateShared(const gfx::IntSize& size) MOZ_OVERRIDE {
-        bool hasAlpha = mReadCaps.alpha;
-        return SharedSurface_D3D11Interop::Create(mGL, mWGL, mWGLD3DDevice, mD3D, size,
-                                                  hasAlpha);
-    }
+    SurfaceFactory_D3D11Interop(GLContext* gl, const SurfaceCaps& caps,
+                                const RefPtr<DXGLDevice>& dxgl);
 
 public:
     virtual ~SurfaceFactory_D3D11Interop();
+
+protected:
+    virtual UniquePtr<SharedSurface> CreateShared(const gfx::IntSize& size) MOZ_OVERRIDE {
+        bool hasAlpha = mReadCaps.alpha;
+        return SharedSurface_D3D11Interop::Create(mDXGL, mGL, size, hasAlpha);
+    }
 };
 
 } /* namespace gl */

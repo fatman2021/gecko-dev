@@ -244,7 +244,7 @@ public:
     cairo_device_t *GetD2DDevice() { return mD2DDevice; }
     ID3D10Device1 *GetD3D10Device() { return mD2DDevice ? cairo_d2d_device_get_device(mD2DDevice) : nullptr; }
 #endif
-    ID3D11Device *GetD3D11Device();
+    const mozilla::RefPtr<ID3D11Device>& GetD3D11Device();
     ID3D11Device *GetD3D11ContentDevice();
 
     mozilla::layers::ReadbackManagerD3D11* GetReadbackManager();
