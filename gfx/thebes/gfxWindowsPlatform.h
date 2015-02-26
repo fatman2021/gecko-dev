@@ -244,6 +244,12 @@ public:
     cairo_device_t *GetD2DDevice() { return mD2DDevice; }
     ID3D10Device1 *GetD3D10Device() { return mD2DDevice ? cairo_d2d_device_get_device(mD2DDevice) : nullptr; }
 #endif
+
+    IDXGIAdapter1 *GetDXGIAdapter();
+    mozilla::TemporaryRef<ID3D11Device> CreateD3D11Device(IDXGIAdapter1* adapter,
+                                                          D3D_DRIVER_TYPE driverType,
+                                                          uint32_t createDeviceFlags) const;
+
     const mozilla::RefPtr<ID3D11Device>& GetD3D11Device();
     ID3D11Device *GetD3D11ContentDevice();
 
@@ -268,7 +274,6 @@ protected:
 private:
     void Init();
     void InitD3D11Devices();
-    IDXGIAdapter1 *GetDXGIAdapter();
 
     bool mUseDirectWrite;
     bool mUsingGDIFonts;

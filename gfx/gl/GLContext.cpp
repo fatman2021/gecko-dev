@@ -2567,7 +2567,6 @@ GLContext::Readback(SharedSurface* src, gfx::DataSourceSurface* dest)
     }
 }
 
-
 /*static*/ void
 GLContext::AdjustObjectCount(const char* desc, int32_t diff, int32_t* const out_count)
 {

@@ -25,7 +25,8 @@ class SharedSurface_D3D11Interop
     const GLuint mProdRB;
     const RefPtr<DXGLDevice> mDXGL;
     const HANDLE mObjectWGL;
-    const RefPtr<ID3D11Texture2D> mConsumerTexture;
+    const RefPtr<ID3D11Texture2D> mTextureD3D;
+    const HANDLE mSharedHandle;
 
 protected:
     bool mLockedForGL;
@@ -40,7 +41,8 @@ protected:
     SharedSurface_D3D11Interop(GLContext* gl, const gfx::IntSize& size, bool hasAlpha,
                                GLuint renderbufferGL, const RefPtr<DXGLDevice>& dxgl,
                                HANDLE objectWGL,
-                               const RefPtr<ID3D11Texture2D>& textureD3D);
+                               const RefPtr<ID3D11Texture2D>& textureD3D,
+                               HANDLE sharedHandle);
 
     virtual void LockProdImpl() MOZ_OVERRIDE { }
     virtual void UnlockProdImpl() MOZ_OVERRIDE { }
@@ -66,8 +68,8 @@ public:
     }
 
     // Implementation-specific functions below:
-    const RefPtr<ID3D11Texture2D>& GetConsumerTexture() const {
-        return mConsumerTexture;
+    HANDLE GetSharedHandle() const {
+        return mSharedHandle;
     }
 };
 
@@ -78,8 +80,7 @@ class SurfaceFactory_D3D11Interop
 public:
     const RefPtr<DXGLDevice> mDXGL;
 
-    static UniquePtr<SurfaceFactory_D3D11Interop> Create(const RefPtr<ID3D11Device>& d3d,
-                                                         GLContext* gl,
+    static UniquePtr<SurfaceFactory_D3D11Interop> Create(GLContext* gl,
                                                          const SurfaceCaps& caps);
 
 protected:

@@ -118,8 +118,7 @@ ClientCanvasLayer::Initialize(const Data& aData)
         }
 
         if (!factory) {
-          const auto& d3d = gfxWindowsPlatform::GetPlatform()->GetD3D11Device();
-          factory = SurfaceFactory_D3D11Interop::Create(d3d, mGLContext, caps);
+          factory = SurfaceFactory_D3D11Interop::Create(mGLContext, caps);
         }
 #endif
         break;
