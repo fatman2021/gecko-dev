@@ -261,6 +261,9 @@ WebGLContext::WebGLContext()
     mGLMaxTransformFeedbackSeparateAttribs = 0;
     mGLMaxUniformBufferBindings = 0;
 
+    mDrawBuffers.SetLength(1);
+    mDrawBuffers[0] = LOCAL_GL_BACK;
+
     // See OpenGL ES 2.0.25 spec, 6.2 State Tables, table 6.13
     mPixelStorePackAlignment = 4;
     mPixelStoreUnpackAlignment = 4;
@@ -1328,22 +1331,21 @@ WebGLContext::ForceClearFramebufferWithDefaultValues(GLbitfield mask,
     gl->fDisable(LOCAL_GL_SCISSOR_TEST);
 
     if (initializeColorBuffer) {
-
         if (drawBuffersIsEnabled) {
-
             GLenum drawBuffersCommand[WebGLContext::kMaxColorAttachments] = { LOCAL_GL_NONE };
 
             for(int32_t i = 0; i < mGLMaxDrawBuffers; i++) {
-                GLint temp;
-                gl->fGetIntegerv(LOCAL_GL_DRAW_BUFFER0 + i, &temp);
+                GLint temp = (GLint) mDrawBuffers[i];
                 currentDrawBuffers[i] = temp;
 
                 if (colorAttachmentsMask[i]) {
                     drawBuffersCommand[i] = LOCAL_GL_COLOR_ATTACHMENT0 + i;
                 }
+
                 if (currentDrawBuffers[i] != drawBuffersCommand[i])
                     shouldOverrideDrawBuffers = true;
             }
+
             // calling draw buffers can cause resolves on adreno drivers so
             // we try to avoid calling it
             if (shouldOverrideDrawBuffers)

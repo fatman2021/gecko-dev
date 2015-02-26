@@ -40,6 +40,10 @@ WebGLExtensionDrawBuffers::WebGLExtensionDrawBuffers(WebGLContext* webgl)
 
     webgl->mGLMaxColorAttachments = maxColorAttachments;
     webgl->mGLMaxDrawBuffers = maxDrawBuffers;
+    webgl->mDrawBuffers.SetLength(maxDrawBuffers);
+    for (int n = 0; n < maxDrawBuffers; n++) {
+        gl->GetUIntegerv(LOCAL_GL_DRAW_BUFFER0 + n, &webgl->mDrawBuffers[n]);
+    }
 }
 
 WebGLExtensionDrawBuffers::~WebGLExtensionDrawBuffers()

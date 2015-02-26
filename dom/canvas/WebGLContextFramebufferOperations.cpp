@@ -162,17 +162,23 @@ WebGLContext::DrawBuffers(const dom::Sequence<GLenum>& buffers)
 
         MakeContextCurrent();
 
-        if (buffers[0] == LOCAL_GL_NONE) {
-            const GLenum drawBuffersCommand = LOCAL_GL_NONE;
-            gl->fDrawBuffers(1, &drawBuffersCommand);
-            return;
+        GLenum drawBuffersCommand = buffers[0];
+        if (drawBuffersCommand != LOCAL_GL_NONE && drawBuffersCommand != LOCAL_GL_BACK) {
+            return ErrorInvalidOperation("drawBuffers: invalid operation (main framebuffer"
+                                         ": buffers[0] must be GL_NONE or GL_BACK)");
         }
-        else if (buffers[0] == LOCAL_GL_BACK) {
-            const GLenum drawBuffersCommand = LOCAL_GL_COLOR_ATTACHMENT0;
-            gl->fDrawBuffers(1, &drawBuffersCommand);
-            return;
-        }
-        return ErrorInvalidOperation("drawBuffers: invalid operation (main framebuffer: buffers[0] must be GL_NONE or GL_BACK)");
+
+        if (drawBuffersCommand == LOCAL_GL_BACK)
+            drawBuffersCommand = LOCAL_GL_COLOR_ATTACHMENT0;
+
+        gl->fDrawBuffers(1, &drawBuffersCommand);
+
+        mDrawBuffers[0] = drawBuffersCommand;
+        for (int n = 1; n < mGLMaxDrawBuffers; n++)
+            mDrawBuffers[n] = LOCAL_GL_NONE;
+
+        // DONE
+        return;
     }
 
     // OK: we are rendering in a framebuffer object
@@ -209,6 +215,12 @@ WebGLContext::DrawBuffers(const dom::Sequence<GLenum>& buffers)
     MakeContextCurrent();
 
     gl->fDrawBuffers(buffersLength, buffers.Elements());
+
+    for (size_t n = 0; n < buffersLength; n++)
+        mDrawBuffers[n] = buffers[n];
+
+    for (size_t n = buffersLength; n < mGLMaxDrawBuffers; n++)
+        mDrawBuffers[n] = LOCAL_GL_NONE;
 }
 
 void
@@ -249,7 +261,3 @@ WebGLContext::StencilMaskSeparate(GLenum face, GLuint mask)
     MakeContextCurrent();
     gl->fStencilMaskSeparate(face, mask);
 }
-
-
-
-

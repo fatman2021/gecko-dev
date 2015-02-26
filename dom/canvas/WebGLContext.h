@@ -1429,6 +1429,7 @@ protected:
     RefPtr<const webgl::LinkedProgramInfo> mActiveProgramLinkInfo;
 
     uint32_t mMaxFramebufferColorAttachments;
+    nsTArray<GLenum> mDrawBuffers;
 
     GLenum LastColorAttachment() const {
         return LOCAL_GL_COLOR_ATTACHMENT0 + mMaxFramebufferColorAttachments - 1;
