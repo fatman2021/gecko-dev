@@ -304,10 +304,12 @@ GLContext::GLContext(const SurfaceCaps& caps,
 {
     mOwningThreadId = PlatformThread::CurrentId();
 
+#ifdef MOZ_GL_ALLOC_STATS
     mCountVB = 0;
     mCountRB = 0;
     mCountTex = 0;
     mCountFB = 0;
+#endif
 }
 
 GLContext::~GLContext() {
@@ -2567,12 +2569,13 @@ GLContext::Readback(SharedSurface* src, gfx::DataSourceSurface* dest)
     }
 }
 
+#ifdef MOZ_GL_ALLOC_STATS
 /*static*/ void
 GLContext::AdjustObjectCount(const char* desc, int32_t diff, int32_t* const out_count)
 {
     *out_count += diff;
     printf_stderr("%s count: %i\n", desc, *out_count);
 }
-
+#endif
 } /* namespace gl */
 } /* namespace mozilla */
