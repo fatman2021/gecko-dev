@@ -8,6 +8,7 @@
 
 #include <windows.h>
 #include "SharedSurface.h"
+#include "mozilla/Atomics.h"
 
 struct ID3D11Device;
 struct ID3D11ShaderResourceView;
@@ -25,8 +26,14 @@ class SharedSurface_D3D11Interop
     const GLuint mProdRB;
     const RefPtr<DXGLDevice> mDXGL;
     const HANDLE mObjectWGL;
-    const RefPtr<ID3D11Texture2D> mTextureD3D;
     const HANDLE mSharedHandle;
+    const RefPtr<ID3D11Texture2D> mTextureD3D;
+    RefPtr<IDXGIKeyedMutex> mKeyedMutex;
+    RefPtr<IDXGIKeyedMutex> mConsumerKeyedMutex;
+    RefPtr<ID3D11Texture2D> mConsumerTexture;
+
+    Atomic<uint32_t> mAcquireKey;
+    Atomic<uint32_t> mReleaseKey;
 
 protected:
     bool mLockedForGL;
@@ -38,11 +45,15 @@ public:
                                                         bool hasAlpha);
 
 protected:
-    SharedSurface_D3D11Interop(GLContext* gl, const gfx::IntSize& size, bool hasAlpha,
-                               GLuint renderbufferGL, const RefPtr<DXGLDevice>& dxgl,
+    SharedSurface_D3D11Interop(GLContext* gl,
+                               const gfx::IntSize& size,
+                               bool hasAlpha,
+                               GLuint renderbufferGL,
+                               const RefPtr<DXGLDevice>& dxgl,
                                HANDLE objectWGL,
                                const RefPtr<ID3D11Texture2D>& textureD3D,
-                               HANDLE sharedHandle);
+                               HANDLE sharedHandle,
+                               const RefPtr<IDXGIKeyedMutex>& keyedMutex);
 
     virtual void LockProdImpl() MOZ_OVERRIDE { }
     virtual void UnlockProdImpl() MOZ_OVERRIDE { }
@@ -55,6 +66,9 @@ public:
 
         return (SharedSurface_D3D11Interop*)surf;
     }
+
+    virtual void ConsumerAcquireImpl() MOZ_OVERRIDE;
+    virtual void ConsumerReleaseImpl() MOZ_OVERRIDE;
 
     virtual void ProducerAcquireImpl() MOZ_OVERRIDE;
     virtual void ProducerReleaseImpl() MOZ_OVERRIDE;
@@ -70,6 +84,10 @@ public:
     // Implementation-specific functions below:
     HANDLE GetSharedHandle() const {
         return mSharedHandle;
+    }
+
+    const RefPtr<ID3D11Texture2D>& GetConsumerTexture() const {
+        return mConsumerTexture;
     }
 };
 

@@ -893,20 +893,14 @@ SharedSurfaceToTexSource(gl::SharedSurface* abstractSurf, Compositor* compositor
     case gl::SharedSurfaceType::DXGLInterop2: {
       auto surf = gl::SharedSurface_D3D11Interop::Cast(abstractSurf);
 
-      HANDLE sharedHandle = surf->GetSharedHandle();
-
       MOZ_ASSERT(compositor->GetBackendType() == LayersBackend::LAYERS_D3D11);
       CompositorD3D11* compositorD3D11 = static_cast<CompositorD3D11*>(compositor);
-      ID3D11Device* d3d = compositorD3D11->GetDevice();
+      RefPtr<ID3D11Texture2D> tex = surf->GetConsumerTexture();
 
-      RefPtr<ID3D11Texture2D> tex;
-      HRESULT hr = d3d->OpenSharedResource(sharedHandle, __uuidof(ID3D11Texture2D),
-                                           (void**)(ID3D11Texture2D**)byRef(tex));
-      if (FAILED(hr)) {
-        NS_WARNING("Failed to open DXGLinterop resource.");
+      if (!tex) {
+        NS_WARNING("Failed to open shared resource.");
         break;
       }
-
       texSource = new DataTextureSourceD3D11(format, compositorD3D11, tex);
       break;
     }

@@ -433,6 +433,11 @@ GLScreenBuffer::Attach(SharedSurface* surf, const gfx::IntSize& size)
 bool
 GLScreenBuffer::Swap(const gfx::IntSize& size, bool discardCurrent)
 {
+    // Release production lock even if we can't get a new back buffer
+    // later on.
+    if (mBack)
+        mBack->Surf()->ProducerRelease();
+
     RefPtr<ShSurfHandle> newBack = mFactory->NewShSurfHandle(size);
     if (!newBack)
         return false;
@@ -444,9 +449,6 @@ GLScreenBuffer::Swap(const gfx::IntSize& size, bool discardCurrent)
         return false;
     }
     // Attach was successful.
-    
-    if (mBack)
-        mBack->Surf()->ProducerRelease();
 
     if (discardCurrent) {
         mBack = newBack;
