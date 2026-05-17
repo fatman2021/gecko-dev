@@ -1,7 +1,7 @@
 MakeItSo==0.2.6
 PyYAML==5.4
 Tempita==0.5.1
-WebOb==1.2b3
+WebOb==1.8.8
 -e hg+http://k0s.org/mozilla/hg/configuration@35416ad140982c11eba0a2d6b96d683f53429e94#egg=configuration-dev
 coverage==3.5.1
 -e hg+http://k0s.org/mozilla/hg/jetperf@4645ae34d2c41a353dcdbd856b486b6d3faabb99#egg=jetperf-dev
