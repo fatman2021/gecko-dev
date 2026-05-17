@@ -1,5 +1,5 @@
 MakeItSo==0.2.6
-PyYAML==3.10
+PyYAML==5.4
 Tempita==0.5.1
 WebOb==1.2b3
 -e hg+http://k0s.org/mozilla/hg/configuration@35416ad140982c11eba0a2d6b96d683f53429e94#egg=configuration-dev
