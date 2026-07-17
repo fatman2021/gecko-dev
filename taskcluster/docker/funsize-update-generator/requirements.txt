@@ -721,8 +721,9 @@ scriptworker==46.0.0 \
     --hash=sha256:94efa759e539f36079abad40db074e9b3c1945602716f7facdd82fe5b53aa6a9 \
     --hash=sha256:e0b0b88c9d722c06d7a5bf19eab4f6f282613b36d171ba950b5501d8ad198207
     # via -r requirements.in
-sh==1.14.3 \
-    --hash=sha256:e4045b6c732d9ce75d571c79f5ac2234edd9ae4f5fa9d59b09705082bdca18c7
+sh==2.2.4 \
+    --hash=sha256:38c65e836b289ce14436b57ba35d3a87438218a1c0af535d89d648b1ed6b072e \
+    --hash=sha256:a45af832d92d423290b7ebc416c00b04250c15ec95715513e3c32c1b431e2c00
     # via -r requirements.in
 six==1.16.0 \
     --hash=sha256:1e61c37477a1626458e36f7b1d82aa5c9b094fa4802892072e49de9c60c4c926 \
