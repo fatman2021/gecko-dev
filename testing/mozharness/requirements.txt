@@ -5,7 +5,7 @@ Fabric==1.6.0
 PyYAML==5.4
 coverage==3.6
 distribute==0.6.35
-dulwich==0.19.6
+dulwich==1.2.5
 hg-git==0.4.0
 logilab-astng==0.24.2
 logilab-common==0.61.0
